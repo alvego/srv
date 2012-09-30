@@ -5,7 +5,12 @@ var url = require('url'),
 
 module.exports = {
     getRequestedFile : function(request){
-        return path.join(path.join(__dirname, cfg.public_path), url.parse(request.url).pathname.replace(/\.\.\//g, '').substring(1) || 'index.html');
+        var pathName = url.parse(request.url).pathname;
+        pathName = pathName.replace('../', '');
+        if (pathName.slice(-1) === '/') {
+            pathName = path.join(pathName, 'index.html');
+        }
+        return path.join(cfg.public_path, pathName);
     },
 
     sendNotFound: function(result){
