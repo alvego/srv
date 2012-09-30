@@ -1,0 +1,12 @@
+{
+  "name": "srv - web server powered by node.js. Support static files and *.jade, *.less",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "less": "*",
+    "jade": "*"
+  }
+}
