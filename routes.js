@@ -31,7 +31,10 @@ function cssAction(request, result){
         var lessErr = function(err){
             console.log(err);
             misc.sendHead(result, file);
-            var message = 'LESS ' + err.type + ' Error: ' + err.message.replace('\'', '`') + ' (file '+ err.filename + ', line ' + err.line + ')';
+            var message = "LESS Error!";
+            if (err){
+                message = 'LESS ' + err.type + ' Error: ' + err.message.replace('\'', '`') + ' (file '+ err.filename + ', line ' + err.line + ')';
+            }
             result.end( 'body:before { color:red; content:\'' + message + '\'; }');
         };
 
