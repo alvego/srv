@@ -1,7 +1,7 @@
 module.exports = {
     'public_path':'./www/',
     'uri':null,
-    'port':81
+    'port':80
 };
 
 
