@@ -4,11 +4,7 @@ var
     jade = require('jade'),
     less = require('less'),
     fs = require('fs');
-/*
-http://localhost:81/1
-http://localhost:81/1/
-http://localhost:81/1//
-*/
+
 function defaultAction(request, response){
     var file = misc.getRequestedFile(request);
     console.log('defaultAction', file);
@@ -102,9 +98,7 @@ function folderRedirectAction(request, response){
     var fsPath = misc.getFsPath(rPath);
     console.log('folderRedirectAction', rPath);
     if (misc.isDirRequested(fsPath)) {
-        response.writeHead(302, {
-            'Location': rPath+'/'
-        });
+        response.writeHead(302, {'Location': rPath+'/'});
         response.end();
         return false;
     }
