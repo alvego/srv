@@ -4,12 +4,12 @@ var http = require('http'),
     routes = require('./routes');
 
 // Create a new HTTP server
-http.createServer(function (request, result) {
+http.createServer(function (request, response) {
     var file = misc.getRequestedFile(request);
-    console.log("SRV: " + request.url);
+    console.log("SRV: " + misc.getRequestedPath(request));
     var stopRouting = false;
     for(var i = 0, l = routes.length; !stopRouting && i < l; i++ ){
-        if (routes[i].filter.test(file) && false === routes[i].action(request, result)) {
+        if (routes[i].filter.test(request.url) && false === routes[i].action(request, response)) {
             stopRouting = true;
         }
     }

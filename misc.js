@@ -1,16 +1,30 @@
 var url = require('url'),
     path = require('path'),
+    fs = require('fs'),
     mime = require('./mime'),
     cfg = require('./cfg');
 
 module.exports = {
+
+    isDirRequested: function(fsPath){
+        return fs.existsSync(fsPath) && fs.statSync(fsPath).isDirectory() ? true : false;
+    },
+
+    getRequestedPath : function(request){
+        return url.parse(request.url).pathname.replace('../', '');
+    },
+
+    getFsPath : function(requestedPath){
+        return path.join(__dirname, cfg.public_path, requestedPath);
+    },
+
+
     getRequestedFile : function(request){
-        var pathName = url.parse(request.url).pathname;
-        pathName = pathName.replace('../', '');
-        if (pathName.slice(-1) === '/') {
-            pathName = path.join(pathName, 'index.html');
+        var fsPath = this.getFsPath(this.getRequestedPath(request));
+        if (this.isDirRequested(fsPath)) {
+            fsPath = path.join(fsPath, 'index.html');
         }
-        return path.join(cfg.public_path, pathName);
+        return fsPath;
     },
 
     sendNotFound: function(result){

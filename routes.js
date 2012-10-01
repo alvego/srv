@@ -4,25 +4,29 @@ var
     jade = require('jade'),
     less = require('less'),
     fs = require('fs');
-
-
-
-function defaultAction(request, result){
+/*
+http://localhost:81/1
+http://localhost:81/1/
+http://localhost:81/1//
+*/
+function defaultAction(request, response){
     var file = misc.getRequestedFile(request);
     console.log('defaultAction', file);
-    fs.readFile(file, function (err, data) {
-        if (err) {
-            misc.sendNotFound(result, file);
-            console.log("ERR: Couldn't find " + file + ", returning 404!");
-            return false;
-        }
-        misc.sendHead(result, file);
-        result.end(data);
-        return false;
-    });
+    if (fs.existsSync(file)){
+        var stream = fs.createReadStream(file, { bufferSize: 64 * 1024 });
+        stream.on('error', function(e){
+            console.log(e);
+            misc.sendNotFound(response);
+        });
+        stream.pipe(response);
+    } else {
+        misc.sendNotFound(response);
+        console.log("ERR: Couldn't find " + file + ", returning 404!");
+    }
+    return false;
 }
 
-function cssAction(request, result){
+function cssAction(request, response){
     var file = misc.getRequestedFile(request);
     console.log('cssAction', file);
     var lessFile = file.replace(/.css$/, '.less');
@@ -30,12 +34,12 @@ function cssAction(request, result){
 
         var lessErr = function(err){
             console.log(err);
-            misc.sendHead(result, file);
+            misc.sendHead(response, file);
             var message = "LESS Error!";
             if (err){
                 message = 'LESS ' + err.type + ' Error: ' + err.message.replace('\'', '`') + ' (file '+ err.filename + ', line ' + err.line + ')';
             }
-            result.end( 'body:before { color:red; content:\'' + message + '\'; }');
+            response.end( 'body:before { color:red; content:\'' + message + '\'; }');
         };
 
         var cssCode = fs.readFileSync(lessFile, 'utf8');
@@ -49,8 +53,8 @@ function cssAction(request, result){
             } else {
                 try {
                     var css = tree.toCSS();
-                    misc.sendHead(result, file);
-                    result.end(css);
+                    misc.sendHead(response, file);
+                    response.end(css);
                 } catch (e) {
                     lessErr(err);
                 }
@@ -60,7 +64,7 @@ function cssAction(request, result){
     }
 }
 
-function htmlAction(request, result){
+function htmlAction(request, response){
     var file = misc.getRequestedFile(request);
     console.log('htmlAction', file);
     var jadeFile = file.replace(/.html$/, '.jade');
@@ -75,27 +79,42 @@ function htmlAction(request, result){
                     filename: jadeFile
                 }
             );
-            var html = fn();
-            misc.sendHead(result, file);
-            result.end(html);
+            var html = fn({request: request});
+            misc.sendHead(response, file);
+            response.end(html);
         } catch(e){
-            misc.sendHead(result, '.txt');
-            result.end(e.message);
+            misc.sendHead(response, '.txt');
+            response.end(e.message);
         }
         return false;
     }
 }
 
-function banAction(request, result){
+function banAction(request, response){
     var file = misc.getRequestedFile(request);
     console.log('banAction', file);
-    misc.sendNotFound(result, file);
+    misc.sendNotFound(response, file);
     return false;
 }
 
+function folderRedirectAction(request, response){
+    var rPath = misc.getRequestedPath(request);
+    var fsPath = misc.getFsPath(rPath);
+    console.log('folderRedirectAction', rPath);
+    if (misc.isDirRequested(fsPath)) {
+        response.writeHead(302, {
+            'Location': rPath+'/'
+        });
+        response.end();
+        return false;
+    }
+    return true;
+}
+
 module.exports = [
-    { filter: /.*\.(jade|less)$/, action: banAction  },
-    { filter: /.*\.html$/, action: htmlAction  },
-    { filter: /.*\.css$/, action: cssAction  },
+    { filter: /[^\/]$/, action: folderRedirectAction  },
+    { filter: /\.(jade|less)$/, action: banAction  },
+    { filter: /(\.html|\/)$/, action: htmlAction  },
+    { filter: /\.css$/, action: cssAction  },
     { filter: /.*/, action: defaultAction  }
 ];
