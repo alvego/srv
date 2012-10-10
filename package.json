@@ -1,5 +1,5 @@
 {
-  "name": "srv - web server powered by node.js. Support static files and *.jade, *.less",
+  "name": "srv",
   "version": "0.0.1",
   "private": true,
   "scripts": {
