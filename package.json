@@ -6,7 +6,5 @@
     "start": "node app"
   },
   "dependencies": {
-    "less": "*",
-    "jade": "*"
   }
 }

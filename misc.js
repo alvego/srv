@@ -1,51 +1,40 @@
 var url = require('url'),
     path = require('path'),
     fs = require('fs'),
-    mime = require('./mime'),
-    cfg = require('./cfg');
+    mime = require('./mime');
 
-module.exports = {
+var misc = {} ;
 
-    isDirRequested: function(fsPath){
-        return fs.existsSync(fsPath) && fs.statSync(fsPath).isDirectory() ? true : false;
-    },
+misc.existsSync = fs.existsSync || path.existsSync;
 
-    getRequestedPath : function(request){
-        return url.parse(request.url).pathname.replace('../', '');
-    },
-
-    getFsPath : function(requestedPath){
-        return path.join(__dirname, cfg.public_path, requestedPath);
-    },
-
-
-    getRequestedFile : function(request){
-        var fsPath = this.getFsPath(this.getRequestedPath(request));
-        if (this.isDirRequested(fsPath)) {
-            fsPath = path.join(fsPath, 'index.html');
-        }
-        return fsPath;
-    },
-
-    sendNotFound: function(result){
-        result.writeHead(404, {
-            "Content-Type":"text/plain"
-        });
-        result.end("404 Not Found\n");
-    },
-
-    sendHead: function SendHead(result, file){
-        result.writeHead(200, {
-            'Content-Type':mime(file),
-            'Access-Control-Allow-Origin':'*'
-        });
-    }
-
+misc.hasLastSlash = function(rPath){
+    return /\/$/g.test(rPath);
 };
 
+misc.getPathName = function(req){
+    return url.parse(req.url).pathname;
+};
 
+misc.getMIME = mime;
 
+misc.isDir =  function(fsPath){
+    return misc.existsSync(fsPath) && fs.statSync(fsPath).isDirectory() ? true : false;
+};
 
+misc.modifyUrlPath = function(sourceUrl, pathModifer){
+    var parsedUrl = url.parse(sourceUrl);
+    parsedUrl.pathname = pathModifer(parsedUrl.pathname);
+    return url.format(parsedUrl);
+};
 
+misc.pipeFile = function(file, res, err){
+    var stream = fs.createReadStream(file, { bufferSize: 64 * 1024 });
+    stream.on('error', err);
+    stream.pipe(res);
+};
 
+misc.getFile = function(file){
+    return '' + fs.readFileSync(file);
+};
 
+module.exports = misc;
